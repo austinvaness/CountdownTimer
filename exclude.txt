@@ -1,0 +1,3 @@
+obj
+AssemblyInfo.cs
+bin

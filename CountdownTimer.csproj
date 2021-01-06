@@ -97,8 +97,18 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="API\TimerAPI.cs" />
+    <Compile Include="HudAPIv2.cs" />
+    <Compile Include="HudTimer.cs" />
     <Compile Include="Session.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup />
+  <ItemGroup>
+    <Content Include="Workshop\metadata.mod" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Workshop\modinfo.sbmi" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

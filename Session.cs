@@ -1,63 +1,31 @@
-﻿using System;
+﻿using avaness.CountdownTimer.API;
+using Draygo.API;
 using Sandbox.ModAPI;
-using VRage.Game;
+using System;
+using System.Collections.Generic;
 using VRage.Game.Components;
-using VRage.Utils;
+using VRageMath;
 
 namespace avaness.CountdownTimer
 {
-    // This object is always present, from the world load to world unload.
-    // NOTE: all clients and server run mod scripts, keep that in mind.
-    // The MyUpdateOrder arg determines what update overrides are actually called.
-    // Remove any method that you don't need, none of them are required, they're only there to show what you can use.
-    // Also remove all comments you've read to avoid the overload of comments that is this file.
-    [MySessionComponentDescriptor(MyUpdateOrder.BeforeSimulation | MyUpdateOrder.AfterSimulation)]
+    [MySessionComponentDescriptor(MyUpdateOrder.AfterSimulation)]
     public class CountdownTimerSession : MySessionComponentBase
     {
-        public static CountdownTimerSession Instance; // the only way to access session comp from other classes and the only accepted static.
-
         private bool init = false;
-
-        public override void LoadData()
-        {
-            // amogst the earliest execution points, but not everything is available at this point.
-
-            Instance = this;
-        }
-
-        public override void BeforeStart()
-        {
-            // executed before the world starts updating
-
-            // Main entry point: MyAPIGateway
-            // Entry point for reading/editing definitions: MyDefinitionManager.Static
-        }
+        private HudAPIv2 hud;
+        private Dictionary<string, HudTimer> timers = new Dictionary<string, HudTimer>();
 
         protected override void UnloadData()
         {
-            // executed when world is exited to unregister events and stuff
-
-            Instance = null; // important for avoiding this object to remain allocated in memory
-        }
-
-        public override void HandleInput()
-        {
-            // gets called 60 times a second before all other update methods, regardless of framerate, game pause or MyUpdateOrder.
-        }
-
-        public override void UpdateBeforeSimulation()
-        {
-            // executed every tick, 60 times a second, before physics simulation and only if game is not paused.
-        }
-
-        public override void Simulate()
-        {
-            // executed every tick, 60 times a second, during physics simulation and only if game is not paused.
-            // NOTE in this example this won't actually be called because of the lack of MyUpdateOrder.Simulation argument in MySessionComponentDescriptor
+            MyAPIGateway.Utilities.UnregisterMessageHandler(TimerAPI.MessageId, ReceiveData);
+            MyAPIGateway.Multiplayer.UnregisterSecureMessageHandler(TimerAPI.PacketId, ReceiveData);
+            foreach (HudTimer timer in timers.Values)
+                timer.Delete();
         }
 
         private void Start()
         {
+            hud = new HudAPIv2(OnHudReady);
             init = true;
         }
 
@@ -68,23 +36,46 @@ namespace avaness.CountdownTimer
             if (!init)
                 Start();
 
-            // executed every tick, 60 times a second, after physics simulation and only if game is not paused.
+            List<string> toRemove = new List<string>();
+            foreach(HudTimer timer in timers.Values)
+            {
+                if (!timer.Update())
+                    toRemove.Add(timer.Id);
+            }
+
+            foreach (string key in toRemove)
+                timers.Remove(key);
+
         }
 
-        public override void Draw()
+        private void OnHudReady()
         {
-            // gets called 60 times a second after all other update methods, regardless of framerate, game pause or MyUpdateOrder.
-            // NOTE: this is the only place where the camera matrix (MyAPIGateway.Session.Camera.WorldMatrix) is accurate, everywhere else it's 1 frame behind.
+            MyAPIGateway.Utilities.RegisterMessageHandler(TimerAPI.MessageId, ReceiveData);
+            MyAPIGateway.Multiplayer.RegisterSecureMessageHandler(TimerAPI.PacketId, ReceiveData);
         }
 
-        public override void SaveData()
+        private void ReceiveData(ushort packetId, byte[] data, ulong sender, bool fromServer)
         {
-            // executed AFTER world was saved
+            DeserializeData(data);
         }
 
-        public override void UpdatingStopped()
+        private void ReceiveData(object obj)
         {
-            // executed when game is paused
+            byte[] data = obj as byte[];
+            if (data != null)
+                DeserializeData(data);
+        }
+
+        private void DeserializeData(byte[] data)
+        {
+            TimerAPI.Timer obj = MyAPIGateway.Utilities.SerializeFromBinary<TimerAPI.Timer>(data);
+            if(obj != null)
+            {
+                HudTimer temp;
+                if (timers.TryGetValue(obj.id, out temp))
+                    temp.Delete();
+                timers[obj.id] = new HudTimer(obj.id, hud, obj.length, obj.text, obj.timerFormat, obj.center, obj.scale, obj.down);
+            }
         }
     }
 }
