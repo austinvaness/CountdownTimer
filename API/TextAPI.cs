@@ -9,22 +9,29 @@ using VRage;
 using VRage.Game.ModAPI;
 using VRageMath;
 
-namespace avaness.CountdownTimer.API
+namespace avaness.ServerTextAPI.API
 {
-    public class TimerAPI
+    public class TextAPI
     {
         public const long MessageId = 2352436226;
         public const ushort PacketId = (ushort)(MessageId % ushort.MaxValue);
 
+        public enum TextAlignment
+        {
+            Left = -1,
+            Center = 0,
+            Right = 1
+        }
+
         [ProtoContract]
-        public class Timer
+        public class Text
         {
             [ProtoMember(1)]
             public string id;
 
             [ProtoMember(2)]
             public long lengthTicks;
-            public TimeSpan length
+            public TimeSpan Length
             {
                 get
                 {
@@ -40,13 +47,10 @@ namespace avaness.CountdownTimer.API
             public string text;
 
             [ProtoMember(4)]
-            public string timerFormat;
-
+            public float centerX;
             [ProtoMember(5)]
-            public double centerX;
-            [ProtoMember(6)]
-            public double centerY;
-            public Vector2D center 
+            public float centerY;
+            public Vector2D Center
             {
                 get
                 {
@@ -54,56 +58,75 @@ namespace avaness.CountdownTimer.API
                 }
                 set
                 {
-                    centerX = value.X;
-                    centerY = value.Y;
+                    centerX = (float)value.X;
+                    centerY = (float)value.Y;
                 }
             }
 
+            [ProtoMember(6)]
+            public float scale;
+
             [ProtoMember(7)]
-            public double scale;
+            public int align;
+            public TextAlignment Alignment
+            {
+                get
+                {
+                    return (TextAlignment)align;
+                }
+                set
+                {
+                    align = (int)value;
+                }
+            }
 
             [ProtoMember(8)]
-            public bool down;
+            public string font;
 
             private readonly List<IMyPlayer> temp = new List<IMyPlayer>();
 
             /// <summary>
             /// Used for serialization only.
             /// </summary>
-            public Timer()
+            public Text()
             {
 
             }
 
             /// <summary>
-            /// Creates a timer object.
+            /// Creates a text object.
             /// </summary>
             /// <param name="id">The timer id.</param>
-            /// <param name="length">The amount of time the timer will be running.</param>
+            /// <param name="length">The amount of time the text will be on the screen.</param>
             /// <param name="text">The text of the timer. Must include {0} to represent the time.</param>
-            /// <param name="timerFormat">The formatting of the time. See TimeSpan format strings.</param>
             /// <param name="center">The center of the timer in Text Hud API coordinates. Top Right = (1,1) Bottom Left = (-1,-1)</param>
             /// <param name="scale">The scale of the text.</param>
-            /// <param name="down">If <see langword="true"/>, the timer will count down instead of up.</param>
-            public Timer(string id, TimeSpan length, string text, string timerFormat, Vector2D center, double scale, bool down = true)
+            /// <param name="alignment">The horizontal alignment of the text.</param>
+            /// <param name="font">The font name of the text. By default, only white and monospace are allowed.</param>
+            public Text(string id, TimeSpan length, string text, Vector2D center, float scale, TextAlignment alignment = TextAlignment.Left, string font = "white")
             {
                 this.id = id;
-                this.lengthTicks = length.Ticks;
+                Length = length;
                 this.text = text;
-                this.timerFormat = timerFormat;
-                this.centerX = center.X;
-                this.centerY = center.Y;
+                Center = center;
                 this.scale = scale;
-                this.down = down;
+                Alignment = alignment;
+                this.font = font;
+            }
+
+            public void Delete()
+            {
+                lengthTicks = 0;
+                text = null;
             }
 
             private byte[] Serialize()
             {
-                return MyAPIGateway.Utilities.SerializeToBinary<Timer>(this);
+                return MyAPIGateway.Utilities.SerializeToBinary<Text>(this);
             }
 
             /// <summary>
-            /// Displays the timer on all matching player's hud.
+            /// Updates the timer on all matching player's hud.
             /// </summary>
             /// <param name="filter">Function that returns true if the player should be sent the hud.</param>
             public void SendToAll(Func<IMyPlayer, bool> filter = null)
@@ -131,7 +154,7 @@ namespace avaness.CountdownTimer.API
             }
 
             /// <summary>
-            /// Displays the timer on a specific player's hud.
+            /// Updates the timer on a specific player's hud.
             /// </summary>
             /// <param name="id">The steam id of the player.</param>
             public void SendTo(ulong id)

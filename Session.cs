@@ -1,26 +1,27 @@
-﻿using avaness.CountdownTimer.API;
+﻿using avaness.ServerTextAPI.API;
 using Draygo.API;
 using Sandbox.ModAPI;
 using System;
 using System.Collections.Generic;
+using System.Text;
 using VRage.Game.Components;
+using VRage.Utils;
 using VRageMath;
 
-namespace avaness.CountdownTimer
+namespace avaness.ServerTextAPI
 {
     [MySessionComponentDescriptor(MyUpdateOrder.AfterSimulation)]
     public class CountdownTimerSession : MySessionComponentBase
     {
         private bool init = false;
         private HudAPIv2 hud;
-        private Dictionary<string, HudTimer> timers = new Dictionary<string, HudTimer>();
+        private Dictionary<string, HudText> texts = new Dictionary<string, HudText>();
 
         protected override void UnloadData()
         {
-            MyAPIGateway.Utilities.UnregisterMessageHandler(TimerAPI.MessageId, ReceiveData);
-            MyAPIGateway.Multiplayer.UnregisterSecureMessageHandler(TimerAPI.PacketId, ReceiveData);
-            foreach (HudTimer timer in timers.Values)
-                timer.Delete();
+            MyAPIGateway.Utilities.UnregisterMessageHandler(TextAPI.MessageId, ReceiveData);
+            MyAPIGateway.Multiplayer.UnregisterSecureMessageHandler(TextAPI.PacketId, ReceiveData);
+            hud?.Unload();
         }
 
         private void Start()
@@ -37,21 +38,30 @@ namespace avaness.CountdownTimer
                 Start();
 
             List<string> toRemove = new List<string>();
-            foreach(HudTimer timer in timers.Values)
+            foreach(HudText timer in texts.Values)
             {
-                if (!timer.Update())
+                if (timer.Update())
                     toRemove.Add(timer.Id);
             }
 
             foreach (string key in toRemove)
-                timers.Remove(key);
+                texts.Remove(key);
 
         }
 
         private void OnHudReady()
         {
-            MyAPIGateway.Utilities.RegisterMessageHandler(TimerAPI.MessageId, ReceiveData);
-            MyAPIGateway.Multiplayer.RegisterSecureMessageHandler(TimerAPI.PacketId, ReceiveData);
+            MyAPIGateway.Utilities.RegisterMessageHandler(TextAPI.MessageId, ReceiveData);
+            MyAPIGateway.Multiplayer.RegisterSecureMessageHandler(TextAPI.PacketId, ReceiveData);
+
+            StringBuilder sb = new StringBuilder();
+            List<MyStringId> ids = new List<MyStringId>();
+            HudAPIv2.APIinfo.GetFonts(ids);
+            foreach(var id in ids)
+                sb.Append(' ').Append(id).Append(',');
+            MyAPIGateway.Utilities.ShowNotification(sb.ToString(), 30000);
+            TextAPI.Text test = new TextAPI.Text("test", new TimeSpan(0, 0, 45), "<color=red>Some Text", Vector2D.Zero, 2, TextAPI.TextAlignment.Right, "FreeMono_Racing");
+            test.SendToAll();
         }
 
         private void ReceiveData(ushort packetId, byte[] data, ulong sender, bool fromServer)
@@ -68,13 +78,14 @@ namespace avaness.CountdownTimer
 
         private void DeserializeData(byte[] data)
         {
-            TimerAPI.Timer obj = MyAPIGateway.Utilities.SerializeFromBinary<TimerAPI.Timer>(data);
+            TextAPI.Text obj = MyAPIGateway.Utilities.SerializeFromBinary<TextAPI.Text>(data);
             if(obj != null)
             {
-                HudTimer temp;
-                if (timers.TryGetValue(obj.id, out temp))
+                HudText temp;
+                if (texts.TryGetValue(obj.id, out temp))
                     temp.Delete();
-                timers[obj.id] = new HudTimer(obj.id, hud, obj.length, obj.text, obj.timerFormat, obj.center, obj.scale, obj.down);
+                if (!string.IsNullOrWhiteSpace(obj.text))
+                    texts[obj.id] = new HudText(obj.id, hud, obj.Length, obj.text, obj.Center, obj.scale, obj.Alignment, obj.font);
             }
         }
     }

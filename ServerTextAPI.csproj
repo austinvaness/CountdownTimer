@@ -7,8 +7,8 @@
     <ProjectGuid>{6ED07B57-CED3-4D53-99D7-A0C20C237E20}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>avaness.CountdownTimer</RootNamespace>
-    <AssemblyName>CountdownTimer</AssemblyName>
+    <RootNamespace>avaness.ServerTextAPI</RootNamespace>
+    <AssemblyName>ServerTextAPI</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
@@ -97,9 +97,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="API\TimerAPI.cs" />
+    <Compile Include="API\TextAPI.cs" />
     <Compile Include="HudAPIv2.cs" />
-    <Compile Include="HudTimer.cs" />
+    <Compile Include="HudText.cs" />
     <Compile Include="Session.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
