@@ -53,15 +53,6 @@ namespace avaness.ServerTextAPI
         {
             MyAPIGateway.Utilities.RegisterMessageHandler(TextAPI.MessageId, ReceiveData);
             MyAPIGateway.Multiplayer.RegisterSecureMessageHandler(TextAPI.PacketId, ReceiveData);
-
-            StringBuilder sb = new StringBuilder();
-            List<MyStringId> ids = new List<MyStringId>();
-            HudAPIv2.APIinfo.GetFonts(ids);
-            foreach(var id in ids)
-                sb.Append(' ').Append(id).Append(',');
-            MyAPIGateway.Utilities.ShowNotification(sb.ToString(), 30000);
-            TextAPI.Text test = new TextAPI.Text("test", new TimeSpan(0, 0, 45), "<color=red>Some Text", Vector2D.Zero, 2, TextAPI.TextAlignment.Right, "FreeMono_Racing");
-            test.SendToAll();
         }
 
         private void ReceiveData(ushort packetId, byte[] data, ulong sender, bool fromServer)
