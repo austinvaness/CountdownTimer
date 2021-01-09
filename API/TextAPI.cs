@@ -2,10 +2,6 @@
 using Sandbox.ModAPI;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using VRage;
 using VRage.Game.ModAPI;
 using VRageMath;
 
@@ -116,7 +112,6 @@ namespace avaness.ServerTextAPI.API
 
             public void Delete()
             {
-                lengthTicks = 0;
                 text = null;
             }
 

@@ -13,31 +13,17 @@ namespace avaness.ServerTextAPI
     {
         public string Id { get; }
 
-        private readonly HudAPIv2 hud;
         private HudAPIv2.HUDMessage hudText;
-        private Vector2D center;
-        private readonly StringBuilder msg;
         private TimeSpan length;
         private readonly TimeSpan oneTick = new TimeSpan((long)(MyEngineConstants.UPDATE_STEP_SIZE_IN_SECONDS * TimeSpan.TicksPerSecond));
-        private readonly double scale;
-        private readonly TextAPI.TextAlignment alignment;
-        private readonly string font;
 
-        public HudText(string id, HudAPIv2 hud, TimeSpan length, string text, Vector2D center, double scale, TextAPI.TextAlignment alignment, string font)
+        public HudText(string id, TimeSpan length, string text, Vector2D center, double scale, TextAPI.TextAlignment alignment, string font)
         {
             Id = id;
-            this.hud = hud;
-            
-            this.center = center;
-            this.scale = scale;
             this.length = length;
-            msg = new StringBuilder(text);
-            this.alignment = alignment;
-            this.font = font;
-
-            if (hud.Heartbeat)
-                Create();
-
+            int ttl = (int)(length.TotalSeconds / MyEngineConstants.UPDATE_STEP_SIZE_IN_SECONDS);
+            hudText = new HudAPIv2.HUDMessage(new StringBuilder(text), center, TimeToLive: ttl, Scale: scale, Blend: BlendTypeEnum.PostPP, Font: font);
+            Align(alignment);
         }
 
         /// <summary>
@@ -47,11 +33,7 @@ namespace avaness.ServerTextAPI
         public bool Update()
         {
             if (hudText == null)
-            {
-                if (hud.Heartbeat)
-                    Create();
-                return true;
-            }
+                return false;
 
             length -= oneTick;
             return length.Ticks > 0;
@@ -60,17 +42,13 @@ namespace avaness.ServerTextAPI
         public void Delete()
         {
             if(hudText != null)
+            {
                 hudText.DeleteMessage();
+                hudText = null;
+            }
         }
 
-        private void Create()
-        {
-            int ttl = (int)(length.TotalSeconds / MyEngineConstants.UPDATE_STEP_SIZE_IN_SECONDS);
-            hudText = new HudAPIv2.HUDMessage(msg, center, TimeToLive: ttl, Scale: scale, Blend: BlendTypeEnum.PostPP, Font: font);
-            Align();
-        }
-
-        private void Align()
+        private void Align(TextAPI.TextAlignment alignment)
         {
             Vector2D size = hudText.GetTextLength();
             Vector2D newOffset = new Vector2D();

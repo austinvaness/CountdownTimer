@@ -1,12 +1,9 @@
 ﻿using avaness.ServerTextAPI.API;
 using Draygo.API;
 using Sandbox.ModAPI;
-using System;
 using System.Collections.Generic;
 using System.Text;
 using VRage.Game.Components;
-using VRage.Utils;
-using VRageMath;
 
 namespace avaness.ServerTextAPI
 {
@@ -40,7 +37,7 @@ namespace avaness.ServerTextAPI
             List<string> toRemove = new List<string>();
             foreach(HudText text in texts.Values)
             {
-                if (text.Update())
+                if (!text.Update())
                     toRemove.Add(text.Id);
             }
 
@@ -69,6 +66,9 @@ namespace avaness.ServerTextAPI
 
         private void DeserializeData(byte[] data)
         {
+            if (!hud.Heartbeat)
+                return;
+
             try
             {
                 TextAPI.Text obj = MyAPIGateway.Utilities.SerializeFromBinary<TextAPI.Text>(data);
@@ -77,11 +77,20 @@ namespace avaness.ServerTextAPI
                     HudText temp;
                     if (texts.TryGetValue(obj.id, out temp))
                         temp.Delete();
-                    if (!string.IsNullOrWhiteSpace(obj.text))
-                        texts[obj.id] = new HudText(obj.id, hud, obj.Length, obj.text, obj.Center, obj.scale, obj.Alignment, obj.font);
+
+                    if (!string.IsNullOrWhiteSpace(obj.text) && obj.lengthTicks > 0)
+                        texts[obj.id] = new HudText(obj.id, obj.Length, obj.text, obj.Center, obj.scale, obj.Alignment, obj.font);
                 }
             }
             catch { }
+        }
+
+        private string GetIds()
+        {
+            StringBuilder sb = new StringBuilder();
+            foreach (string key in texts.Keys)
+                sb.Append(key).Append(' ');
+            return sb.ToString();
         }
     }
 }
