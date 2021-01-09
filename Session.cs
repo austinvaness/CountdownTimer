@@ -84,13 +84,5 @@ namespace avaness.ServerTextAPI
             }
             catch { }
         }
-
-        private string GetIds()
-        {
-            StringBuilder sb = new StringBuilder();
-            foreach (string key in texts.Keys)
-                sb.Append(key).Append(' ');
-            return sb.ToString();
-        }
     }
 }
