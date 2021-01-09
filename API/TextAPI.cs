@@ -96,10 +96,10 @@ namespace avaness.ServerTextAPI.API
             /// <summary>
             /// Creates a text object.
             /// </summary>
-            /// <param name="id">The timer id.</param>
+            /// <param name="id">The text object id.</param>
             /// <param name="length">The amount of time the text will be on the screen.</param>
-            /// <param name="text">The text of the timer. Must include {0} to represent the time.</param>
-            /// <param name="center">The center of the timer in Text Hud API coordinates. Top Right = (1,1) Bottom Left = (-1,-1)</param>
+            /// <param name="text">The text to display.</param>
+            /// <param name="center">The position of the text in Text Hud API coordinates. Top Right = (1,1) Bottom Left = (-1,-1)</param>
             /// <param name="scale">The scale of the text.</param>
             /// <param name="alignment">The horizontal alignment of the text.</param>
             /// <param name="font">The font name of the text. By default, only white and monospace are allowed.</param>
@@ -126,7 +126,7 @@ namespace avaness.ServerTextAPI.API
             }
 
             /// <summary>
-            /// Updates the timer on all matching player's hud.
+            /// Updates the text on all matching player's hud.
             /// </summary>
             /// <param name="filter">Function that returns true if the player should be sent the hud.</param>
             public void SendToAll(Func<IMyPlayer, bool> filter = null)
@@ -154,7 +154,7 @@ namespace avaness.ServerTextAPI.API
             }
 
             /// <summary>
-            /// Updates the timer on a specific player's hud.
+            /// Updates the text on a specific player's hud.
             /// </summary>
             /// <param name="id">The steam id of the player.</param>
             public void SendTo(ulong id)

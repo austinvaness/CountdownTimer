@@ -15,7 +15,7 @@ namespace avaness.ServerTextAPI
     {
         private bool init = false;
         private HudAPIv2 hud;
-        private Dictionary<string, HudText> texts = new Dictionary<string, HudText>();
+        private readonly Dictionary<string, HudText> texts = new Dictionary<string, HudText>();
 
         protected override void UnloadData()
         {
@@ -38,10 +38,10 @@ namespace avaness.ServerTextAPI
                 Start();
 
             List<string> toRemove = new List<string>();
-            foreach(HudText timer in texts.Values)
+            foreach(HudText text in texts.Values)
             {
-                if (timer.Update())
-                    toRemove.Add(timer.Id);
+                if (text.Update())
+                    toRemove.Add(text.Id);
             }
 
             foreach (string key in toRemove)
@@ -69,15 +69,19 @@ namespace avaness.ServerTextAPI
 
         private void DeserializeData(byte[] data)
         {
-            TextAPI.Text obj = MyAPIGateway.Utilities.SerializeFromBinary<TextAPI.Text>(data);
-            if(obj != null)
+            try
             {
-                HudText temp;
-                if (texts.TryGetValue(obj.id, out temp))
-                    temp.Delete();
-                if (!string.IsNullOrWhiteSpace(obj.text))
-                    texts[obj.id] = new HudText(obj.id, hud, obj.Length, obj.text, obj.Center, obj.scale, obj.Alignment, obj.font);
+                TextAPI.Text obj = MyAPIGateway.Utilities.SerializeFromBinary<TextAPI.Text>(data);
+                if (obj != null)
+                {
+                    HudText temp;
+                    if (texts.TryGetValue(obj.id, out temp))
+                        temp.Delete();
+                    if (!string.IsNullOrWhiteSpace(obj.text))
+                        texts[obj.id] = new HudText(obj.id, hud, obj.Length, obj.text, obj.Center, obj.scale, obj.Alignment, obj.font);
+                }
             }
+            catch { }
         }
     }
 }
